@@ -187,6 +187,24 @@ class Panel_EVOBase(PanelBase):
                 logger.error("Authentication Failed")
                 return False
 
+    async def load_memory(self):
+        logger.info("Loading Block counters")
+        await self.load_block_counters()
+
+        await super(Panel_EVOBase, self).load_memory()
+
+    async def load_block_counters(self):
+        addresses = enumerate(range(40704, 40896 + 16 + 1, 64), start=1)
+
+        block_counters = b"".join(
+            [
+                raw_data
+                async for index, raw_data in self._eeprom_batch_reader(addresses, 64)
+            ]
+        )
+
+        logger.debug(f"Block counters: {binascii.hexlify(block_counters)}")
+
     @staticmethod
     def _request_status_reply_check(message: Container, address: int):
         mvars = message.fields.value
